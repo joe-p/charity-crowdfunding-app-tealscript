@@ -537,9 +537,54 @@ deleteDonatorInfo:
 	box_del
 	retsub
 
+bare_route_DeleteApplication:
+	txn OnCompletion
+	int DeleteApplication
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	callsub delete
+	int 1
+	return
+
+delete:
+	proto 0 0
+
+	// contract.algo.ts:97
+	// this.authorizeCreator()
+	// no dupn needed
+	callsub authorizeCreator
+
+	// contract.algo.ts:98
+	// assert(this.active.get() == 0)
+	byte "active"
+	app_global_get
+	int 0
+	==
+	assert
+
+	// contract.algo.ts:99
+	// assert(this.fundRaised.get() == 0)
+	byte "fundRaised"
+	app_global_get
+	int 0
+	==
+	assert
+	retsub
+
 main:
 	txn NumAppArgs
 	bnz route_abi
+	txn OnCompletion
+	int DeleteApplication
+	==
+	int 1
+	match bare_route_DeleteApplication
 
 	// default createApplication
 	txn ApplicationID

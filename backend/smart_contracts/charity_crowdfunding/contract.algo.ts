@@ -92,10 +92,10 @@ class charityCrowdfundingApp extends Contract {
     this.donatorInfo.delete(donator)
   }
 
-  // @handle.deleteApplication
-  // delete(): void {
-  //   this.authorizeCreator()
-  //   assert(this.active.get() == 0)
-  //   assert(this.fundRaised.get() == 0)
-  // }
+  @handle.deleteApplication
+  delete(): void {
+    this.authorizeCreator()
+    assert(this.active.get() == 0)
+    assert(this.fundRaised.get() == 0)
+  }
 }
