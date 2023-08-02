@@ -1,0 +1,129 @@
+{
+  "name": "charityCrowdfundingApp",
+  "desc": "",
+  "methods": [
+    {
+      "name": "authorizeCreator",
+      "args": [],
+      "desc": "",
+      "returns": {
+        "type": "void",
+        "desc": ""
+      }
+    },
+    {
+      "name": "optInAsset",
+      "args": [
+        {
+          "name": "assetId",
+          "type": "asset",
+          "desc": ""
+        }
+      ],
+      "desc": "",
+      "returns": {
+        "type": "void",
+        "desc": ""
+      }
+    },
+    {
+      "name": "bootstrap",
+      "args": [
+        {
+          "name": "title",
+          "type": "string",
+          "desc": ""
+        },
+        {
+          "name": "detail",
+          "type": "string",
+          "desc": ""
+        },
+        {
+          "name": "goal",
+          "type": "uint64",
+          "desc": ""
+        },
+        {
+          "name": "minDonation",
+          "type": "uint64",
+          "desc": ""
+        },
+        {
+          "name": "nftTransfer",
+          "type": "axfer",
+          "desc": ""
+        }
+      ],
+      "desc": "",
+      "returns": {
+        "type": "void",
+        "desc": ""
+      }
+    },
+    {
+      "name": "fund",
+      "args": [
+        {
+          "name": "mbrPay",
+          "type": "pay",
+          "desc": ""
+        },
+        {
+          "name": "fundPay",
+          "type": "pay",
+          "desc": ""
+        }
+      ],
+      "desc": "",
+      "returns": {
+        "type": "void",
+        "desc": ""
+      }
+    },
+    {
+      "name": "claimNFT",
+      "args": [
+        {
+          "name": "optin",
+          "type": "axfer",
+          "desc": ""
+        },
+        {
+          "name": "nft",
+          "type": "asset",
+          "desc": ""
+        }
+      ],
+      "desc": "",
+      "returns": {
+        "type": "void",
+        "desc": ""
+      }
+    },
+    {
+      "name": "claimFund",
+      "args": [],
+      "desc": "",
+      "returns": {
+        "type": "uint64",
+        "desc": ""
+      }
+    },
+    {
+      "name": "deleteDonatorInfo",
+      "args": [
+        {
+          "name": "donator",
+          "type": "account",
+          "desc": ""
+        }
+      ],
+      "desc": "",
+      "returns": {
+        "type": "void",
+        "desc": ""
+      }
+    }
+  ]
+}

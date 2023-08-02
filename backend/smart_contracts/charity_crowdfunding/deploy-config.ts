@@ -1,8 +1,5 @@
 import * as algokit from '@algorandfoundation/algokit-utils'
-import { CharityCrowdfundingAppClient } from '../artifacts/charity_crowdfunding_app/client'
-import { AppClientCallCoreParams } from '@algorandfoundation/algokit-utils/types/app-client'
-import { SendTransactionParams } from '@algorandfoundation/algokit-utils/types/transaction'
-import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
+import { CharityCrowdfundingAppClient } from '../artifacts-tealscript/client'
 import algosdk from 'algosdk'
 import { mintRewardNft } from './mint_nft'
 
@@ -86,7 +83,7 @@ export async function deploy() {
   // }
 
   await appClient.optInAsset(
-    { nft: rewardNftId },
+    { assetId: rewardNftId },
     {
       sendParams: {
         fee: algokit.transactionFees(2), //covers inner transaction
@@ -127,8 +124,8 @@ export async function deploy() {
     title: title,
     detail: detail,
     goal: goal.valueOf(),
-    min_donate: minDonate.valueOf(),
-    nft_transfer: { transaction: rewardNftTransferTxn, signer: deployer },
+    minDonation: minDonate.valueOf(),
+    nftTransfer: { transaction: rewardNftTransferTxn, signer: deployer },
   })
 
   console.log('Fundraiser Details after bootstrap')
@@ -225,7 +222,7 @@ export async function deploy() {
   })
 
   // Call fund method
-  await appClient2.fund({ mbr_pay: mbrPayTxn, fund_pay: donateTxn }, { boxes: [{ appId: app.appId, name: donator1 }] })
+  await appClient2.fund({ mbrPay: mbrPayTxn, fundPay: donateTxn }, { boxes: [{ appId: app.appId, name: donator1 }] })
 
   // Do the same for donator2
   const mbrPayTxn2 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
@@ -244,10 +241,7 @@ export async function deploy() {
   })
 
   // Call fund method
-  await appClient3.fund(
-    { mbr_pay: mbrPayTxn2, fund_pay: donateTxn2 },
-    { boxes: [{ appId: app.appId, name: donator2 }] },
-  )
+  await appClient3.fund({ mbrPay: mbrPayTxn2, fundPay: donateTxn2 }, { boxes: [{ appId: app.appId, name: donator2 }] })
 
   console.log('Donator 2, 3 funded the fundraiser')
 

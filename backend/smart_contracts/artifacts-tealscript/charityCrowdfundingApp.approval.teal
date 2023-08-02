@@ -1,0 +1,601 @@
+#pragma version 8
+	b main
+
+abi_route_authorizeCreator:
+	txn OnCompletion
+	int NoOp
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	callsub authorizeCreator
+	int 1
+	return
+
+authorizeCreator:
+	proto 0 0
+
+	// contract.algo.ts:14
+	// assert(this.app.creator == this.txn.sender)
+	txna Applications 0
+	app_params_get AppCreator
+	assert
+	txn Sender
+	==
+	assert
+	retsub
+
+abi_route_optInAsset:
+	txn OnCompletion
+	int NoOp
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	txna ApplicationArgs 1
+	btoi
+	txnas Assets
+	callsub optInAsset
+	int 1
+	return
+
+optInAsset:
+	proto 1 0
+
+	// contract.algo.ts:18
+	// this.authorizeCreator()
+	// no dupn needed
+	callsub authorizeCreator
+
+	// contract.algo.ts:19
+	// sendAssetTransfer({
+	itxn_begin
+	int axfer
+	itxn_field TypeEnum
+
+	// contract.algo.ts:20
+	// assetAmount: 0
+	int 0
+	itxn_field AssetAmount
+
+	// contract.algo.ts:21
+	// assetReceiver: this.app.address
+	txna Applications 0
+	app_params_get AppAddress
+	assert
+	itxn_field AssetReceiver
+
+	// contract.algo.ts:22
+	// fee: 0
+	int 0
+	itxn_field Fee
+
+	// contract.algo.ts:23
+	// xferAsset: assetId
+	frame_dig -1 // assetId: asset
+	itxn_field XferAsset
+	itxn_submit
+	retsub
+
+abi_route_bootstrap:
+	txn OnCompletion
+	int NoOp
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	txn GroupIndex
+	int 1
+	-
+	txna ApplicationArgs 4
+	btoi
+	txna ApplicationArgs 3
+	btoi
+	txna ApplicationArgs 2
+	extract 2 0
+	txna ApplicationArgs 1
+	extract 2 0
+	callsub bootstrap
+	int 1
+	return
+
+bootstrap:
+	proto 5 0
+
+	// contract.algo.ts:28
+	// this.authorizeCreator()
+	// no dupn needed
+	callsub authorizeCreator
+
+	// contract.algo.ts:30
+	// assert(nftTransfer.assetReceiver == this.app.address)
+	frame_dig -5 // nftTransfer: axfer
+	gtxns AssetReceiver
+	txna Applications 0
+	app_params_get AppAddress
+	assert
+	==
+	assert
+
+	// contract.algo.ts:31
+	// assert(nftTransfer.assetAmount > 0)
+	frame_dig -5 // nftTransfer: axfer
+	gtxns AssetAmount
+	int 0
+	>
+	assert
+
+	// contract.algo.ts:32
+	// this.title.set(title)
+	byte "title"
+	frame_dig -1 // title: bytes
+	dup
+	len
+	itob
+	extract 6 2
+	swap
+	concat
+	app_global_put
+
+	// contract.algo.ts:33
+	// this.detail.set(detail)
+	byte "detail"
+	frame_dig -2 // detail: bytes
+	dup
+	len
+	itob
+	extract 6 2
+	swap
+	concat
+	app_global_put
+
+	// contract.algo.ts:34
+	// this.goal.set(goal)
+	byte "goal"
+	frame_dig -3 // goal: uint64
+	app_global_put
+
+	// contract.algo.ts:35
+	// this.minDonation.set(minDonation)
+	byte "minDonation"
+	frame_dig -4 // minDonation: uint64
+	app_global_put
+
+	// contract.algo.ts:36
+	// this.fundRaised.set(0)
+	byte "fundRaised"
+	int 0
+	app_global_put
+
+	// contract.algo.ts:37
+	// this.donatorNum.set(0)
+	byte "donatorNum"
+	int 0
+	app_global_put
+
+	// contract.algo.ts:38
+	// this.active.set(1)
+	byte "active"
+	int 1
+	app_global_put
+	retsub
+
+abi_route_fund:
+	txn OnCompletion
+	int NoOp
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	txn GroupIndex
+	int 1
+	-
+	txn GroupIndex
+	int 2
+	-
+	callsub fund
+	int 1
+	return
+
+fund:
+	proto 2 0
+
+	// contract.algo.ts:42
+	// assert(this.active.get() == 1)
+	byte "active"
+	app_global_get
+	int 1
+	==
+	assert
+
+	// contract.algo.ts:43
+	// assert(mbrPay.amount > 0)
+	frame_dig -1 // mbrPay: pay
+	gtxns Amount
+	int 0
+	>
+	assert
+
+	// contract.algo.ts:44
+	// assert(mbrPay.receiver == this.app.address)
+	frame_dig -1 // mbrPay: pay
+	gtxns Receiver
+	txna Applications 0
+	app_params_get AppAddress
+	assert
+	==
+	assert
+
+	// contract.algo.ts:45
+	// assert(fundPay.sender == this.txn.sender)
+	frame_dig -2 // fundPay: pay
+	gtxns Sender
+	txn Sender
+	==
+	assert
+
+	// contract.algo.ts:46
+	// assert(fundPay.amount >= this.minDonation.get())
+	frame_dig -2 // fundPay: pay
+	gtxns Amount
+	byte "minDonation"
+	app_global_get
+	>=
+	assert
+
+	// contract.algo.ts:47
+	// assert(fundPay.receiver == this.app.address)
+	frame_dig -2 // fundPay: pay
+	gtxns Receiver
+	txna Applications 0
+	app_params_get AppAddress
+	assert
+	==
+	assert
+
+	// contract.algo.ts:49
+	// this.donatorInfo.set(this.txn.sender, fundPay.amount)
+	txn Sender
+	frame_dig -2 // fundPay: pay
+	gtxns Amount
+	itob
+	box_put
+
+	// contract.algo.ts:50
+	// this.fundRaised.set(this.fundRaised.get() + fundPay.amount)
+	byte "fundRaised"
+	byte "fundRaised"
+	app_global_get
+	frame_dig -2 // fundPay: pay
+	gtxns Amount
+	+
+	app_global_put
+
+	// contract.algo.ts:51
+	// this.donatorNum.set(this.donatorNum.get() + 1)
+	byte "donatorNum"
+	byte "donatorNum"
+	app_global_get
+	int 1
+	+
+	app_global_put
+	retsub
+
+abi_route_claimNFT:
+	txn OnCompletion
+	int NoOp
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	txna ApplicationArgs 1
+	btoi
+	txnas Assets
+	txn GroupIndex
+	int 1
+	-
+	callsub claimNFT
+	int 1
+	return
+
+claimNFT:
+	proto 2 0
+
+	// contract.algo.ts:55
+	// assert(this.active.get() == 1)
+	byte "active"
+	app_global_get
+	int 1
+	==
+	assert
+
+	// contract.algo.ts:56
+	// assert(this.donatorInfo.exists(this.txn.sender))
+	txn Sender
+	box_len
+	swap
+	pop
+	assert
+
+	// contract.algo.ts:57
+	// assert(this.donatorInfo.get(this.txn.sender) >= 0)
+	txn Sender
+	box_get
+	assert
+	btoi
+	int 0
+	>=
+	assert
+
+	// contract.algo.ts:58
+	// assert(optin.assetReceiver == this.app.address)
+	frame_dig -1 // optin: axfer
+	gtxns AssetReceiver
+	txna Applications 0
+	app_params_get AppAddress
+	assert
+	==
+	assert
+
+	// contract.algo.ts:59
+	// assert(optin.xferAsset == nft)
+	frame_dig -1 // optin: axfer
+	gtxns XferAsset
+	frame_dig -2 // nft: asset
+	==
+	assert
+
+	// contract.algo.ts:60
+	// assert(optin.assetAmount > 0)
+	frame_dig -1 // optin: axfer
+	gtxns AssetAmount
+	int 0
+	>
+	assert
+
+	// contract.algo.ts:62
+	// sendAssetTransfer({
+	itxn_begin
+	int axfer
+	itxn_field TypeEnum
+
+	// contract.algo.ts:63
+	// xferAsset: nft
+	frame_dig -2 // nft: asset
+	itxn_field XferAsset
+
+	// contract.algo.ts:64
+	// assetAmount: 1
+	int 1
+	itxn_field AssetAmount
+
+	// contract.algo.ts:65
+	// assetReceiver: this.txn.sender
+	txn Sender
+	itxn_field AssetReceiver
+
+	// contract.algo.ts:66
+	// fee: 0
+	int 0
+	itxn_field Fee
+	itxn_submit
+	retsub
+
+abi_route_claimFund:
+	txn OnCompletion
+	int NoOp
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+	byte 0x
+	callsub claimFund
+	int 1
+	return
+
+claimFund:
+	proto 1 0
+
+	// contract.algo.ts:71
+	// totalRaisedFunds = this.fundRaised.get()
+	byte "fundRaised"
+	app_global_get
+	frame_bury -1 // totalRaisedFunds: uint64
+
+	// contract.algo.ts:73
+	// this.authorizeCreator()
+	// no dupn needed
+	callsub authorizeCreator
+
+	// contract.algo.ts:74
+	// assert(this.active.get() == 1)
+	byte "active"
+	app_global_get
+	int 1
+	==
+	assert
+
+	// contract.algo.ts:75
+	// assert(totalRaisedFunds >= this.goal.get())
+	frame_dig -1 // totalRaisedFunds: uint64
+	byte "goal"
+	app_global_get
+	>=
+	assert
+
+	// contract.algo.ts:77
+	// sendPayment({
+	itxn_begin
+	int pay
+	itxn_field TypeEnum
+
+	// contract.algo.ts:78
+	// amount: totalRaisedFunds
+	frame_dig -1 // totalRaisedFunds: uint64
+	itxn_field Amount
+
+	// contract.algo.ts:79
+	// receiver: this.app.creator
+	txna Applications 0
+	app_params_get AppCreator
+	assert
+	itxn_field Receiver
+
+	// contract.algo.ts:80
+	// fee: 0
+	int 0
+	itxn_field Fee
+	itxn_submit
+
+	// contract.algo.ts:83
+	// this.active.set(0)
+	byte "active"
+	int 0
+	app_global_put
+
+	// contract.algo.ts:84
+	// this.fundRaised.set(0)
+	byte "fundRaised"
+	int 0
+	app_global_put
+
+	// contract.algo.ts:85
+	// return totalRaisedFunds
+	frame_dig -1 // totalRaisedFunds: uint64
+	itob
+	byte 0x151f7c75
+	swap
+	concat
+	log
+	retsub
+
+abi_route_deleteDonatorInfo:
+	txn OnCompletion
+	int NoOp
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	txna ApplicationArgs 1
+	btoi
+	txnas Accounts
+	callsub deleteDonatorInfo
+	int 1
+	return
+
+deleteDonatorInfo:
+	proto 1 0
+
+	// contract.algo.ts:89
+	// this.authorizeCreator()
+	// no dupn needed
+	callsub authorizeCreator
+
+	// contract.algo.ts:90
+	// assert(this.active.get() == 0)
+	byte "active"
+	app_global_get
+	int 0
+	==
+	assert
+
+	// contract.algo.ts:91
+	// assert(this.donatorInfo.exists(donator))
+	frame_dig -1 // donator: account
+	box_len
+	swap
+	pop
+	assert
+
+	// contract.algo.ts:92
+	// this.donatorInfo.delete(donator)
+	frame_dig -1 // donator: account
+	box_del
+	retsub
+
+bare_route_DeleteApplication:
+	txn OnCompletion
+	int DeleteApplication
+	==
+	txn ApplicationID
+	int 0
+	!=
+	&&
+	assert
+
+	// no dupn needed
+	callsub delete
+	int 1
+	return
+
+delete:
+	proto 0 0
+
+	// contract.algo.ts:97
+	// this.authorizeCreator()
+	// no dupn needed
+	callsub authorizeCreator
+
+	// contract.algo.ts:98
+	// assert(this.active.get() == 0)
+	byte "active"
+	app_global_get
+	int 0
+	==
+	assert
+
+	// contract.algo.ts:99
+	// assert(this.fundRaised.get() == 0)
+	byte "fundRaised"
+	app_global_get
+	int 0
+	==
+	assert
+	retsub
+
+main:
+	txn NumAppArgs
+	bnz route_abi
+	txn OnCompletion
+	int DeleteApplication
+	==
+	int 1
+	match bare_route_DeleteApplication
+
+route_abi:
+	method "authorizeCreator()void"
+	method "optInAsset(asset)void"
+	method "bootstrap(string,string,uint64,uint64,axfer)void"
+	method "fund(pay,pay)void"
+	method "claimNFT(axfer,asset)void"
+	method "claimFund()uint64"
+	method "deleteDonatorInfo(account)void"
+	txna ApplicationArgs 0
+	match abi_route_authorizeCreator abi_route_optInAsset abi_route_bootstrap abi_route_fund abi_route_claimNFT abi_route_claimFund abi_route_deleteDonatorInfo
+	err
