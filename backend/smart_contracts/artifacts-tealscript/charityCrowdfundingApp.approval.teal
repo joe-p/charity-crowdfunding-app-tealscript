@@ -348,12 +348,10 @@ claimNFT:
 	assert
 
 	// contract.algo.ts:58
-	// assert(optin.assetReceiver == this.app.address)
+	// assert(optin.assetReceiver == this.txn.sender)
 	frame_dig -1 // optin: axfer
 	gtxns AssetReceiver
-	txna Applications 0
-	app_params_get AppAddress
-	assert
+	txn Sender
 	==
 	assert
 
@@ -366,11 +364,11 @@ claimNFT:
 	assert
 
 	// contract.algo.ts:60
-	// assert(optin.assetAmount > 0)
+	// assert(optin.assetAmount == 0)
 	frame_dig -1 // optin: axfer
 	gtxns AssetAmount
 	int 0
-	>
+	==
 	assert
 
 	// contract.algo.ts:62
@@ -539,54 +537,19 @@ deleteDonatorInfo:
 	box_del
 	retsub
 
-bare_route_DeleteApplication:
-	txn OnCompletion
-	int DeleteApplication
-	==
-	txn ApplicationID
-	int 0
-	!=
-	&&
-	assert
-
-	// no dupn needed
-	callsub delete
-	int 1
-	return
-
-delete:
-	proto 0 0
-
-	// contract.algo.ts:97
-	// this.authorizeCreator()
-	// no dupn needed
-	callsub authorizeCreator
-
-	// contract.algo.ts:98
-	// assert(this.active.get() == 0)
-	byte "active"
-	app_global_get
-	int 0
-	==
-	assert
-
-	// contract.algo.ts:99
-	// assert(this.fundRaised.get() == 0)
-	byte "fundRaised"
-	app_global_get
-	int 0
-	==
-	assert
-	retsub
-
 main:
 	txn NumAppArgs
 	bnz route_abi
-	txn OnCompletion
-	int DeleteApplication
+
+	// default createApplication
+	txn ApplicationID
+	int 0
 	==
-	int 1
-	match bare_route_DeleteApplication
+	txn OnCompletion
+	int NoOp
+	==
+	&&
+	return
 
 route_abi:
 	method "authorizeCreator()void"

@@ -55,9 +55,9 @@ class charityCrowdfundingApp extends Contract {
     assert(this.active.get() == 1)
     assert(this.donatorInfo.exists(this.txn.sender))
     assert(this.donatorInfo.get(this.txn.sender) >= 0)
-    assert(optin.assetReceiver == this.app.address)
+    assert(optin.assetReceiver == this.txn.sender)
     assert(optin.xferAsset == nft)
-    assert(optin.assetAmount > 0)
+    assert(optin.assetAmount == 0)
 
     sendAssetTransfer({
       xferAsset: nft,
@@ -92,10 +92,10 @@ class charityCrowdfundingApp extends Contract {
     this.donatorInfo.delete(donator)
   }
 
-  @handle.deleteApplication
-  delete(): void {
-    this.authorizeCreator()
-    assert(this.active.get() == 0)
-    assert(this.fundRaised.get() == 0)
-  }
+  // @handle.deleteApplication
+  // delete(): void {
+  //   this.authorizeCreator()
+  //   assert(this.active.get() == 0)
+  //   assert(this.fundRaised.get() == 0)
+  // }
 }

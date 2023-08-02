@@ -87,6 +87,7 @@ export async function deploy() {
     {
       sendParams: {
         fee: algokit.transactionFees(2), //covers inner transaction
+        suppressLog: true,
       },
     },
   )
@@ -114,19 +115,26 @@ export async function deploy() {
 
   // const rewardNftTransferTxnSigner = await algokit.getTransactionWithSigner(rewardNftTransferTxn, deployer)
 
-  console.log('Fundraiser Details Before Bootstrap')
-  const global_states = await appClient.getGlobalState()
-  console.log('\t Fundraise Title: ', global_states['title']?.asString())
-  console.log('\t Fundraise Goal: ', global_states['goal']?.asNumber(), ' MicroAlgos')
-  console.log('\t Minimum Donation: ', global_states['min_donation']?.asNumber(), ' MicroAlgos')
+  // console.log('Fundraiser Details Before Bootstrap')
+  // const global_states = await appClient.getGlobalState()
+  // console.log('\t Fundraise Title: ', global_states['title']?.asString())
+  // console.log('\t Fundraise Goal: ', global_states['goal']?.asNumber(), ' MicroAlgos')
+  // console.log('\t Minimum Donation: ', global_states['min_donation']?.asNumber(), ' MicroAlgos')
 
-  await appClient.bootstrap({
-    title: title,
-    detail: detail,
-    goal: goal.valueOf(),
-    minDonation: minDonate.valueOf(),
-    nftTransfer: { transaction: rewardNftTransferTxn, signer: deployer },
-  })
+  await appClient.bootstrap(
+    {
+      title: title,
+      detail: detail,
+      goal: goal.valueOf(),
+      minDonation: minDonate.valueOf(),
+      nftTransfer: { transaction: rewardNftTransferTxn, signer: deployer },
+    },
+    {
+      sendParams: {
+        suppressLog: true,
+      },
+    },
+  )
 
   console.log('Fundraiser Details after bootstrap')
   const global_state2 = await appClient.getGlobalState()
@@ -222,7 +230,15 @@ export async function deploy() {
   })
 
   // Call fund method
-  await appClient2.fund({ mbrPay: mbrPayTxn, fundPay: donateTxn }, { boxes: [{ appId: app.appId, name: donator1 }] })
+  await appClient2.fund(
+    { mbrPay: mbrPayTxn, fundPay: donateTxn },
+    {
+      sendParams: {
+        suppressLog: true,
+      },
+      boxes: [{ appId: app.appId, name: donator1 }],
+    },
+  )
 
   // Do the same for donator2
   const mbrPayTxn2 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
@@ -241,7 +257,15 @@ export async function deploy() {
   })
 
   // Call fund method
-  await appClient3.fund({ mbrPay: mbrPayTxn2, fundPay: donateTxn2 }, { boxes: [{ appId: app.appId, name: donator2 }] })
+  await appClient3.fund(
+    { mbrPay: mbrPayTxn2, fundPay: donateTxn2 },
+    {
+      sendParams: {
+        suppressLog: true,
+      },
+      boxes: [{ appId: app.appId, name: donator2 }],
+    },
+  )
 
   console.log('Donator 2, 3 funded the fundraiser')
 
@@ -267,7 +291,7 @@ export async function deploy() {
 
   await appClient2.claimNft(
     { optin: optinTxns[0], nft: rewardNftId },
-    { sendParams: { fee: algokit.transactionFees(2) }, boxes: [donator1] },
+    { sendParams: { fee: algokit.transactionFees(2), suppressLog: true }, boxes: [donator1] },
   ) // cover txn fee of optin and the inner txn sending the nft to the account
 
   const donator1AssetInfo = await algod.accountAssetInformation(donator1.addr, rewardNftId).do()
@@ -280,7 +304,7 @@ export async function deploy() {
   // Donator2 calls claimNFT
   await appClient3.claimNft(
     { optin: optinTxns[1], nft: rewardNftId },
-    { sendParams: { fee: algokit.transactionFees(2) }, boxes: [donator2] },
+    { sendParams: { fee: algokit.transactionFees(2), suppressLog: true }, boxes: [donator2] },
   ) // cover txn fee of optin and the inner txn sending the nft to the account
 
   const donator2AssetInfo = await algod.accountAssetInformation(donator1.addr, rewardNftId).do()
@@ -292,7 +316,7 @@ export async function deploy() {
   )
 
   // Fundraiser creator claim all Funds
-  const result = await appClient.claimFund({}, { sendParams: { fee: algokit.transactionFees(2) } })
+  const result = await appClient.claimFund({}, { sendParams: { fee: algokit.transactionFees(2), suppressLog: true } })
   console.log('Total claimed Funds: ', Number(result.return) / 1_000_000, 'Algos')
 
   // Check that the remaining app address balance == minimum balance
@@ -306,7 +330,12 @@ export async function deploy() {
     const encodedName = algosdk.encodeAddress(boxName.nameRaw)
     await appClient.deleteDonatorInfo(
       { donator: encodedName },
-      { boxes: [{ appId: app.appId, name: boxName.nameRaw }] },
+      {
+        sendParams: {
+          suppressLog: true,
+        },
+        boxes: [{ appId: app.appId, name: boxName.nameRaw }],
+      },
     )
     console.log('Box with name ', encodedName, 'is Deleted')
   }
@@ -314,10 +343,10 @@ export async function deploy() {
   console.log(boxes2.length, ' boxes found')
 
   // delete app
-  try {
-    await appClient.delete
-  } catch (e) {
-    console.log(e)
-  }
-  console.log('App Deleted')
+  // try {
+  //   await appClient.delete
+  // } catch (e) {
+  //   console.log(e)
+  // }
+  // console.log('App Deleted')
 }
